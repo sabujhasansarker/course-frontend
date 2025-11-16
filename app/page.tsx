@@ -34,11 +34,6 @@ async function deleteCourse(formData: FormData) {
   "use server";
 
   const courseId = Number(formData.get("courseId"));
-  const confirm = formData.get("confirm") as string;
-
-  if (confirm !== "true") {
-    return;
-  }
 
   try {
     await prisma.course.delete({
@@ -51,8 +46,8 @@ async function deleteCourse(formData: FormData) {
   }
 }
 
-// Edit Course
-async function editCourse(formData: FormData) {
+// Update Course
+async function updateCourse(formData: FormData) {
   "use server";
 
   const courseId = Number(formData.get("courseId"));
@@ -88,13 +83,13 @@ export default async function Page({
 
   // Find by ID for editing
   const editId = searchParams.edit ? Number(searchParams.edit) : null;
-  const editCourse = editId
+  const courseToEdit = editId
     ? await prisma.course.findUnique({ where: { id: editId } })
     : null;
 
   // Find by ID for viewing
   const viewId = searchParams.view ? Number(searchParams.view) : null;
-  const viewCourse = viewId
+  const courseToView = viewId
     ? await prisma.course.findUnique({ where: { id: viewId } })
     : null;
 
@@ -152,17 +147,17 @@ export default async function Page({
       </div>
 
       {/* Edit Course Form */}
-      {editCourse && (
+      {courseToEdit && (
         <div className="mb-[60px] border p-6 rounded bg-yellow-50">
           <h2 className="text-2xl font-bold mb-4">Edit Course</h2>
-          <form action={editCourse} className="space-y-4">
-            <input type="hidden" name="courseId" value={editCourse.id} />
+          <form action={updateCourse} className="space-y-4">
+            <input type="hidden" name="courseId" value={courseToEdit.id} />
             <div>
               <label className="block mb-1">Course Name</label>
               <input
                 type="text"
                 name="name"
-                defaultValue={editCourse.name}
+                defaultValue={courseToEdit.name}
                 required
                 className="w-full border p-2 rounded"
               />
@@ -172,7 +167,7 @@ export default async function Page({
               <input
                 type="text"
                 name="instructor"
-                defaultValue={editCourse.instructor}
+                defaultValue={courseToEdit.instructor}
                 required
                 className="w-full border p-2 rounded"
               />
@@ -183,7 +178,7 @@ export default async function Page({
                 type="number"
                 step="0.1"
                 name="duration"
-                defaultValue={editCourse.duration}
+                defaultValue={courseToEdit.duration}
                 required
                 className="w-full border p-2 rounded"
               />
@@ -193,7 +188,7 @@ export default async function Page({
               <input
                 type="url"
                 name="website"
-                defaultValue={editCourse.website || ""}
+                defaultValue={courseToEdit.website || ""}
                 className="w-full border p-2 rounded"
               />
             </div>
@@ -216,31 +211,31 @@ export default async function Page({
       )}
 
       {/* View Single Course */}
-      {viewCourse && (
+      {courseToView && (
         <div className="mb-[60px] border p-6 rounded bg-blue-50">
           <h2 className="text-2xl font-bold mb-4">Course Details</h2>
           <p>
-            <strong>ID:</strong> {viewCourse.id}
+            <strong>ID:</strong> {courseToView.id}
           </p>
           <p>
-            <strong>Name:</strong> {viewCourse.name}
+            <strong>Name:</strong> {courseToView.name}
           </p>
           <p>
-            <strong>Instructor:</strong> {viewCourse.instructor}
+            <strong>Instructor:</strong> {courseToView.instructor}
           </p>
           <p>
-            <strong>Duration:</strong> {viewCourse.duration} hours
+            <strong>Duration:</strong> {courseToView.duration} hours
           </p>
-          {viewCourse.website && (
+          {courseToView.website && (
             <p>
               <strong>Website:</strong>{" "}
               <a
-                href={viewCourse.website}
+                href={courseToView.website}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:underline"
               >
-                {viewCourse.website}
+                {courseToView.website}
               </a>
             </p>
           )}
@@ -286,21 +281,9 @@ export default async function Page({
               </a>
               <form action={deleteCourse}>
                 <input type="hidden" name="courseId" value={course.id} />
-                <input type="hidden" name="confirm" value="true" />
                 <button
                   type="submit"
                   className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                  formAction={async (formData) => {
-                    "use server";
-                    const courseId = Number(formData.get("courseId"));
-                    const courseName = course.name;
-
-                    // Note: Server-side confirmation isn't ideal, better to use client component
-                    await prisma.course.delete({
-                      where: { id: courseId },
-                    });
-                    revalidatePath("/");
-                  }}
                 >
                   Delete
                 </button>
